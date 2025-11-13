@@ -1,48 +1,54 @@
 """
-Database Schemas
+Database Schemas for Student Management System
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model represents a collection in MongoDB.
+Collection name is lowercase of class name by default.
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
+from datetime import datetime
 
-# Example schemas (replace with your own):
 
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
+class Student(BaseModel):
     name: str = Field(..., description="Full name")
     email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    password_hash: str = Field(..., description="Hashed password")
+    role: str = Field("student", description="user role: student|admin")
+    is_active: bool = Field(True)
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
 
-# Add your own schemas here:
-# --------------------------------------------------
+class Course(BaseModel):
+    code: str = Field(..., description="Course code e.g., CS101")
+    title: str = Field(..., description="Course title")
+    description: Optional[str] = Field(None)
+    instructor: Optional[str] = Field(None)
+    capacity: Optional[int] = Field(100, ge=1)
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+
+class Enrollment(BaseModel):
+    student_id: str = Field(..., description="Student _id as string")
+    course_id: str = Field(..., description="Course _id as string")
+    status: str = Field("enrolled", description="enrolled|completed|dropped")
+    enrolled_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class Attendance(BaseModel):
+    student_id: str
+    course_id: str
+    date: datetime = Field(default_factory=datetime.utcnow)
+    status: str = Field("present", description="present|absent")
+
+
+class Grade(BaseModel):
+    student_id: str
+    course_id: str
+    grade: float = Field(..., ge=0, le=100)
+    label: Optional[str] = Field(None, description="e.g., Midterm, Final, Assignment 1")
+    graded_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class Session(BaseModel):
+    user_id: str
+    token: str
+    expires_at: datetime
